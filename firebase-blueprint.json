@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Consumer": {
+      "title": "Consumer",
+      "description": "A person who receives milk deliveries.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the consumer." },
+        "address": { "type": "string", "description": "Delivery address." },
+        "defaultQuantity": { "type": "number", "description": "Default quantity of milk in litres." },
+        "active": { "type": "boolean", "description": "Whether the consumer is currently active." },
+        "uid": { "type": "string", "description": "Owner UID." }
+      },
+      "required": ["name", "defaultQuantity", "active", "uid"]
+    },
+    "Delivery": {
+      "title": "Delivery",
+      "description": "A record of a milk delivery to a consumer.",
+      "type": "object",
+      "properties": {
+        "consumerId": { "type": "string", "description": "ID of the consumer." },
+        "date": { "type": "string", "format": "date", "description": "Date of delivery (YYYY-MM-DD)." },
+        "quantity": { "type": "number", "description": "Quantity delivered in litres." },
+        "status": { "type": "string", "enum": ["delivered", "skipped"], "description": "Status of the delivery." },
+        "pricePerUnit": { "type": "number", "description": "Price per litre at the time of delivery." },
+        "uid": { "type": "string", "description": "Owner UID." }
+      },
+      "required": ["consumerId", "date", "quantity", "status", "pricePerUnit", "uid"]
+    },
+    "Inventory": {
+      "title": "Inventory",
+      "description": "A record of milk bought or sold at the shop.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date", "description": "Date of transaction (YYYY-MM-DD)." },
+        "type": { "type": "string", "enum": ["buy", "sell"], "description": "Type of transaction." },
+        "quantity": { "type": "number", "description": "Quantity in litres." },
+        "source": { "type": "string", "description": "Source (supplier) or destination (customer)." },
+        "totalAmount": { "type": "number", "description": "Total money involved." },
+        "uid": { "type": "string", "description": "Owner UID." }
+      },
+      "required": ["date", "type", "quantity", "totalAmount", "uid"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global settings for the milk shop.",
+      "type": "object",
+      "properties": {
+        "pricePerLitre": { "type": "number", "description": "Current price per litre of milk." },
+        "language": { "type": "string", "enum": ["en", "hi"], "description": "Preferred language." },
+        "milkTypes": { "type": "array", "items": { "type": "string" }, "description": "Available milk types." },
+        "uid": { "type": "string", "description": "Owner UID." }
+      },
+      "required": ["pricePerLitre", "uid"]
+    }
+  },
+  "firestore": {
+    "/consumers/{consumerId}": { "schema": "Consumer", "description": "Collection of consumers." },
+    "/deliveries/{deliveryId}": { "schema": "Delivery", "description": "Collection of daily deliveries." },
+    "/inventory/{inventoryId}": { "schema": "Inventory", "description": "Collection of inventory transactions." },
+    "/settings/{settingsId}": { "schema": "Settings", "description": "User settings." }
+  }
+}

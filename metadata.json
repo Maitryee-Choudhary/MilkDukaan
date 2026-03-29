@@ -1,0 +1,5 @@
+{
+  "name": "MilkShop Tracker",
+  "description": "A simple milk record tracking app for local milk shops and doorstep deliveries.",
+  "requestFramePermissions": []
+}
