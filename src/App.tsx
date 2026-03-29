@@ -31,6 +31,8 @@ import {
   db, 
   auth, 
   signInWithGoogle, 
+  loginWithEmail,
+  registerWithEmail,
   logout, 
   handleFirestoreError, 
   OperationType 
@@ -122,6 +124,14 @@ const TRANSLATIONS = {
     type_name: 'Type Name (e.g. Gold)',
     delete_type_confirm: 'Delete this milk type?',
     save_changes: 'Save Changes',
+    login: 'Login',
+    signup: 'Sign Up',
+    email_phone: 'Email or Phone',
+    password: 'Password',
+    no_account: "Don't have an account?",
+    have_account: 'Already have an account?',
+    invalid_credentials: 'Invalid email or password.',
+    account_created: 'Account created successfully!',
   },
   hi: {
     app_name: 'मिल्कशॉप ट्रैकर',
@@ -190,6 +200,14 @@ const TRANSLATIONS = {
     type_name: 'प्रकार का नाम (जैसे गोल्ड)',
     delete_type_confirm: 'क्या आप इस दूध के प्रकार को हटाना चाहते हैं?',
     save_changes: 'परिवर्तन सहेजें',
+    login: 'लॉगिन',
+    signup: 'साइन अप',
+    email_phone: 'ईमेल या फोन',
+    password: 'पासवर्ड',
+    no_account: "खाता नहीं है?",
+    have_account: 'पहले से ही एक खाता है?',
+    invalid_credentials: 'अमान्य ईमेल या पासवर्ड।',
+    account_created: 'खाता सफलतापूर्वक बनाया गया!',
   }
 };
 
@@ -355,23 +373,7 @@ export default function App() {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-blue-200/50 max-w-md w-full space-y-8">
-          <div className="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto">
-            <Milk className="w-12 h-12 text-blue-600" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('app_name')}</h1>
-            <p className="text-gray-500 text-lg">{t('tagline')}</p>
-          </div>
-          <Button size="xl" className="w-full py-5 rounded-2xl" onClick={signInWithGoogle}>
-            {t('start_now')}
-          </Button>
-          <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">{t('safe_secure')}</p>
-        </div>
-      </div>
-    );
+    return <AuthView t={t} />;
   }
 
   return (
@@ -490,6 +492,125 @@ const NavButton = ({ active, onClick, icon, label }: { active: boolean; onClick:
     <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
   </button>
 );
+
+// --- Auth View ---
+
+const AuthView = ({ t }: { t: (key: any) => string }) => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const formatEmail = (input: string) => {
+    if (input.includes('@')) return input;
+    // If it's just numbers, assume it's a phone and make it an email
+    const clean = input.replace(/\+/g, '').replace(/\s/g, '');
+    if (/^\d+$/.test(clean)) {
+      return `${clean}@milkshop.com`;
+    }
+    return input;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const finalEmail = formatEmail(email);
+
+    try {
+      if (isSignUp) {
+        await registerWithEmail(finalEmail, password);
+      } else {
+        await loginWithEmail(finalEmail, password);
+      }
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.message || t('invalid_credentials'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-6 text-center">
+      <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-blue-200/50 max-w-md w-full space-y-8">
+        <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+          <Milk className="w-10 h-10 text-blue-600" />
+        </div>
+        
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('app_name')}</h1>
+          <p className="text-gray-500">{t('tagline')}</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          <Input 
+            label={t('email_phone')} 
+            placeholder="e.g. 9876543210"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input 
+            label={t('password')} 
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100">
+              {error}
+            </div>
+          )}
+
+          <Button 
+            size="lg" 
+            className="w-full py-4 rounded-2xl font-bold" 
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? '...' : (isSignUp ? t('signup') : t('login'))}
+          </Button>
+        </form>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-100"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-400 font-bold">Or</span>
+            </div>
+          </div>
+
+          <Button 
+            variant="outline" 
+            className="w-full py-4 rounded-2xl font-bold" 
+            onClick={signInWithGoogle}
+            type="button"
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-2" alt="Google" />
+            Google
+          </Button>
+
+          <button 
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-blue-600 font-bold text-sm hover:underline"
+          >
+            {isSignUp ? t('have_account') : t('no_account')}
+          </button>
+        </div>
+
+        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{t('safe_secure')}</p>
+      </div>
+    </div>
+  );
+};
 
 // --- Views ---
 
