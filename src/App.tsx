@@ -527,7 +527,11 @@ const AuthView = ({ t }: { t: (key: any) => string }) => {
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      setError(err.message || t('invalid_credentials'));
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Email/Password sign-in is not enabled in the Firebase Console. Please enable it or use Google sign-in.');
+      } else {
+        setError(err.message || t('invalid_credentials'));
+      }
     } finally {
       setLoading(false);
     }
